@@ -13,12 +13,12 @@ import (
 
 func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, basePrompt *scheduling.BasePrompt) (*AgentResponse, error) {
 	// Формируем полный промпт
-	fullPrompt := c.buildFullPrompt(systemPrompt, basePrompt)
+	fullPrompt := c.buildFullPrompt(basePrompt) // необходимо переделать так, чтобы buildFullPrompt являлся частью функции BasePrompt
 
 	// Создаем запрос к LM Studio API
 	request := map[string]interface{}{
 		"model": c.model,
-		"messages": []map[string]string{
+		"messages": []map[string]interface{}{
 			{
 				"role":    "system",
 				"content": systemPrompt.BuildPromptString(),
@@ -29,10 +29,11 @@ func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, baseP
 			},
 		},
 		"temperature": 0.7,
-		"max_tokens":  2000,
+		"max_tokens":  4000,
 	}
-
 	// Отправляем запрос
+	fmt.Println("fullPrompt", fullPrompt)
+	fmt.Println("sysPrompt", systemPrompt.BuildPromptString())
 	jsonResponse, err := c.sendRequest(request)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка отправки запроса: %w", err)
@@ -51,7 +52,7 @@ func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, baseP
 	return response, nil
 }
 
-func (c *LMStudioClient) buildFullPrompt(systemPrompt *scheduling.SystemPrompt, basePrompt *scheduling.BasePrompt) string {
+func (c *LMStudioClient) buildFullPrompt(basePrompt *scheduling.BasePrompt) string {
 	var promptBuilder strings.Builder
 
 	// Добавляем пользовательский запрос
@@ -127,42 +128,44 @@ func (c *LMStudioClient) sendRequest(request map[string]interface{}) ([]byte, er
 func (c *LMStudioClient) ExecuteTool(response *AgentResponse) (string, error) {
 	switch response.Tool {
 	case "write_code":
-		return c.executeWriteCode(response.Parameters)
+		// return c.executeWriteCode(response.Parameters)
+
 	case "test_code":
-		return c.executeTestCode(response.Parameters)
+		// return c.executeTestCode(response.Parameters)
 	case "execute_command":
-		return c.executeCommand(response.Parameters)
+		// return c.executeCommand(response.Parameters)
 	case "read_file":
-		return c.executeReadFile(response.Parameters)
+		// return c.executeReadFile(response.Parameters)
 	case "write_file":
-		return c.executeWriteFile(response.Parameters)
+		// return c.executeWriteFile(response.Parameters)
 	default:
 		return "", fmt.Errorf("неизвестный инструмент: %s", response.Tool)
 	}
+	return "", fmt.Errorf("test")
 }
 
-// Пример реализации инструментов (заглушки)
-func (c *LMStudioClient) executeWriteCode(params map[string]string) (string, error) {
-	// Реализация записи кода в файл
-	return "Код успешно записан", nil
-}
+// // Пример реализации инструментов (заглушки)
+// func (c *LMStudioClient) executeWriteCode(params map[string]string) (string, error) {
+// 	// Реализация записи кода в файл
+// 	return "Код успешно записан", nil
+// }
 
-func (c *LMStudioClient) executeTestCode(params map[string]string) (string, error) {
-	// Реализация тестирования кода
-	return "Тесты успешно пройдены", nil
-}
+// func (c *LMStudioClient) executeTestCode(params map[string]string) (string, error) {
+// 	// Реализация тестирования кода
+// 	return "Тесты успешно пройдены", nil
+// }
 
-func (c *LMStudioClient) executeCommand(params map[string]string) (string, error) {
-	// Реализация выполнения команды
-	return "Команда выполнена успешно", nil
-}
+// func (c *LMStudioClient) executeCommand(params map[string]string) (string, error) {
+// 	// Реализация выполнения команды
+// 	return "Команда выполнена успешно", nil
+// }
 
-func (c *LMStudioClient) executeReadFile(params map[string]string) (string, error) {
-	// Реализация чтения файла
-	return "Содержимое файла", nil
-}
+// func (c *LMStudioClient) executeReadFile(params map[string]string) (string, error) {
+// 	// Реализация чтения файла
+// 	return "Содержимое файла", nil
+// }
 
-func (c *LMStudioClient) executeWriteFile(params map[string]string) (string, error) {
-	// Реализация записи в файл
-	return "Данные успешно записаны", nil
-}
+// func (c *LMStudioClient) executeWriteFile(params map[string]string) (string, error) {
+// 	// Реализация записи в файл
+// 	return "Данные успешно записаны", nil
+// }
