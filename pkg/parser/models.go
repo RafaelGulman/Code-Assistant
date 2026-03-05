@@ -1,19 +1,39 @@
 package parser
 
-// Самый внешний ответ
-type OuterResponse struct {
-	Tool        string `json:"tool"`
-	Parameters  any    `json:"parameters"`
-	Explanation string `json:"explanation"`
-	RawResponse string `json:"raw_response"` // ← это строка с JSON внутри!
-	Error       string `json:"error,omitempty"`
+type ChatResponse struct {
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int64    `json:"created"`
+	Model   string   `json:"model"`
+	Choices []Choice `json:"choices"`
+	Usage   Usage    `json:"usage"`
 }
 
-// Ответ LM Studio API (внутри RawResponse)
-type LMStudioResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
+type Choice struct {
+	Index        int     `json:"index"`
+	Message      Message `json:"message"`
+	Logprobs     any     `json:"logprobs"` // или конкретный тип, если не null
+	FinishReason string  `json:"finish_reason"`
+}
+
+type Message struct {
+	Role      string `json:"role"`
+	Content   string `json:"content"`
+	ToolCalls []any  `json:"tool_calls"`
+}
+
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
+type ContentResponse struct {
+	Tool       string `json:"tool"`
+	Parameters struct {
+		Language string `json:"language"`
+		Filename string `json:"filename"`
+		Code     string `json:"code"`
+	} `json:"parameters"`
+	Explanation string `json:"explanation"`
 }

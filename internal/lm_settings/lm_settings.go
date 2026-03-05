@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, basePrompt *scheduling.BasePrompt) (*AgentResponse, error) {
+func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, basePrompt *scheduling.BasePrompt) ([]byte, error) {
 	// Формируем полный промпт
 	fullPrompt := c.buildFullPrompt(basePrompt) // необходимо переделать так, чтобы buildFullPrompt являлся частью функции BasePrompt
 
@@ -38,18 +38,7 @@ func (c *LMStudioClient) SendPrompt(systemPrompt *scheduling.SystemPrompt, baseP
 	if err != nil {
 		return nil, fmt.Errorf("ошибка отправки запроса: %w", err)
 	}
-
-	// Парсим ответ
-	response := &AgentResponse{}
-	if err := json.Unmarshal(jsonResponse, response); err != nil {
-		// Если не удалось распарсить как структуру, сохраняем сырой ответ
-		response.RawResponse = string(jsonResponse)
-		response.Error = fmt.Sprintf("ошибка парсинга ответа: %v", err)
-		return response, nil
-	}
-
-	response.RawResponse = string(jsonResponse)
-	return response, nil
+	return jsonResponse, nil
 }
 
 func (c *LMStudioClient) buildFullPrompt(basePrompt *scheduling.BasePrompt) string {
@@ -63,8 +52,8 @@ func (c *LMStudioClient) buildFullPrompt(basePrompt *scheduling.BasePrompt) stri
 	if len(basePrompt.ConversationHistory) > 0 {
 		promptBuilder.WriteString("ИСТОРИЯ РАЗГОВОРА:\n")
 		for _, msg := range basePrompt.ConversationHistory {
-			promptBuilder.WriteString(fmt.Sprintf("[%s] %s: %s\n",
-				msg.Time.Format(time.RFC3339), msg.Role, msg.Content))
+			promptBuilder.WriteString(fmt.Sprintf("[%s]: %s\n",
+				msg.Time.Format(time.RFC3339), msg.Content))
 
 			if msg.Tool != nil {
 				promptBuilder.WriteString(fmt.Sprintf("  Инструмент: %s\n", msg.Tool.ToolName))
@@ -123,25 +112,6 @@ func (c *LMStudioClient) sendRequest(request map[string]interface{}) ([]byte, er
 	}
 
 	return response, nil
-}
-
-func (c *LMStudioClient) ExecuteTool(response *AgentResponse) (string, error) {
-	switch response.Tool {
-	case "write_code":
-		// return c.executeWriteCode(response.Parameters)
-
-	case "test_code":
-		// return c.executeTestCode(response.Parameters)
-	case "execute_command":
-		// return c.executeCommand(response.Parameters)
-	case "read_file":
-		// return c.executeReadFile(response.Parameters)
-	case "write_file":
-		// return c.executeWriteFile(response.Parameters)
-	default:
-		return "", fmt.Errorf("неизвестный инструмент: %s", response.Tool)
-	}
-	return "", fmt.Errorf("test")
 }
 
 // // Пример реализации инструментов (заглушки)

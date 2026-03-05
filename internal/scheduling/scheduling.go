@@ -30,7 +30,7 @@ func NewSystemPrompt() *SystemPrompt {
 				Name:        "execute_command",
 				Description: "Выполнить терминальную команду",
 				Parameters:  []string{"command", "working_dir"},
-				Example:     `{"tool": "execute_command", "parameters": {"command": "ls -la", "working_dir": "/home/user"}}`,
+				Example:     `{"tool": "execute_command", "parameters": {"command": "ls -la", "working_dir": "."}}`,
 			},
 			{
 				Name:        "read_file",
@@ -54,7 +54,16 @@ func NewSystemPrompt() *SystemPrompt {
 			"Проверяй синтаксис кода перед выполнением",
 		},
 
-		ResponseFormat: "JSON с полями: tool (название инструмента), parameters (параметры вызова), explanation (объяснение действий)",
+		ResponseFormat: `ТОЛЬКО JSON с полями: tool (название инструмента), parameters (параметры вызова), explanation (объяснение действий). Пример:
+{
+  "tool": "write_code",
+  "parameters": {
+    "language": "go",
+    "filename": "example.go",
+    "code": "package main\\n\\nimport \\\"fmt\\\"\\n\\nfunc main() {\\n    fmt.Println(\\\"Hello, World!\\\")\\n}"
+  },
+  "explanation": "Простой пример программы на Go, выводящей 'Hello, World!'"
+}`,
 
 		ContextInfo: ContextInfo{
 			CurrentTime:    time.Now(),
@@ -120,9 +129,8 @@ func NewBasePromptSet(userQuery string, talkHistory []Message, agentState AgentS
 }
 
 // AddMessage добавляет сообщение в историю разговора ??
-func (bp *BasePrompt) AddMessage(role, content string) {
+func (bp *BasePrompt) AddMessage(content string) {
 	bp.ConversationHistory = append(bp.ConversationHistory, Message{
-		Role:    role, //??
 		Content: content,
 		Time:    time.Now(),
 	})

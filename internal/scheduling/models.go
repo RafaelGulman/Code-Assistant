@@ -52,7 +52,6 @@ type BasePrompt struct {
 
 // Message представляет сообщение в истории разговора
 type Message struct {
-	Role    string    `json:"role"`
 	Content string    `json:"content"`
 	Time    time.Time `json:"time"`
 	Tool    *ToolCall `json:"tool,omitempty"`
