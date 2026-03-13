@@ -1,12 +1,9 @@
 package main
 
 import (
+	"app/codeAssistant/internal/executor"
 	"app/codeAssistant/internal/lm_settings"
 	"app/codeAssistant/internal/scheduling"
-	"app/codeAssistant/pkg/parser"
-	"encoding/json"
-	"fmt"
-	"log"
 )
 
 func main() {
@@ -19,18 +16,21 @@ func main() {
 		scheduling.AgentState{},
 		"normal",
 	)
+	iter := executor.NewIterator(*kasper, *sysPrompt, *basePrompt)
 
-	resp, err := kasper.SendPrompt(sysPrompt, basePrompt)
-	if err != nil {
-		log.Fatalf("Error sending prompt: %v", err)
-	}
+	iter.StartIteration()
 
-	var result parser.ChatResponse
-	err = json.Unmarshal(resp, &result)
-	if err != nil {
-		log.Fatalf("Error unmarshaling ChatResponse: %v", err)
-	}
-	fmt.Println(result)
-	content, err := parser.ParseContentResponse(&result)
-	fmt.Println(content.String())
+	// resp, err := kasper.SendPrompt(sysPrompt, basePrompt)
+	// if err != nil {
+	// 	log.Fatalf("Error sending prompt: %v", err)
+	// }
+
+	// var result parser.ChatResponse
+	// err = json.Unmarshal(resp, &result)
+	// if err != nil {
+	// 	log.Fatalf("Error unmarshaling ChatResponse: %v", err)
+	// }
+	// fmt.Println(result)
+	// content, err := parser.ParseContentResponse(&result)
+	// fmt.Println(content.String())
 }

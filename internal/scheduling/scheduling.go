@@ -193,3 +193,13 @@ func getOSInfo() string {
 	// Здесь можно добавить более детальную информацию о системе
 	return "Windows" // Заменить на реальное определение
 }
+
+func (t *Task) UpdateState(status TaskStatus) {
+	if status == finish {
+		t.Status = status
+		t.changeStatus = time.Now()
+		t.endTask = t.changeStatus
+	}
+	t.Status = status
+	t.changeStatus = time.Now()
+}

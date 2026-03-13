@@ -70,3 +70,29 @@ type AgentState struct {
 	ErrorCount     int               `json:"error_count"`
 	Variables      map[string]string `json:"variables"`
 }
+
+type TaskStatus int
+
+const (
+	stop    TaskStatus = 0
+	process TaskStatus = 1
+	finish  TaskStatus = 2
+	error   TaskStatus = -1
+)
+
+type Task struct {
+	Description  string
+	beginTask    time.Time
+	endTask      time.Time
+	changeStatus time.Time
+	Status       TaskStatus
+}
+
+func NewTask(description string) *Task {
+	return &Task{
+		Description:  description,
+		beginTask:    time.Now(),
+		changeStatus: time.Now(),
+		Status:       process,
+	}
+}
