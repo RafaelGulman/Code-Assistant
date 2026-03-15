@@ -4,94 +4,189 @@
     <meta charset="UTF-8">
     <title>Задачи для ИИ Агента</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Подключаем SortableJS для Drag-n-Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        /* Стили для цветных полосок приоритета */
-        .priority-high { border-left: 5px solid #dc3545; }
-        .priority-medium { border-left: 5px solid #ffc107; }
-        .priority-low { border-left: 5px solid #198754; }
+        body {
+            /* Красивый градиентный фон */
+            background: linear-gradient(45deg, #ddbdb3, #f5bed3, #86d4f0, #a4f0de);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Эффект Матового Стекла (Glassmorphism) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 2rem;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            cursor: grab;
+            color: #333;
+            text-shadow: none;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 10;
+        }
+
+        .glass-card:active {
+            cursor: grabbing;
+        }
+
+        /* Цветные полоски приоритета */
+        .priority-high { border-left: 6px solid #dc3545; }
+        .priority-medium { border-left: 6px solid #ffc107; }
+        .priority-low { border-left: 6px solid #198754; }
+
+        /* Стили для кнопок внутри стекла */
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
+            color: #fff;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.6);
+            color: #333;
+        }
         
-        body { background-color: #f8f9fa; }
-        .card { transition: transform 0.2s; }
-        .card:hover { transform: translateY(-2px); }
+        /* Скрытие скроллбара для красоты */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 4px; }
+        
+        h2, label, .form-label { color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .card-header, .card-body, .card-footer { background: transparent !important; border: none !important; }
+        .badge { text-shadow: none; }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <!-- Заголовок и кнопки управления -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>🤖 Панель задач ИИ Агента</h2>
-            <div>
-                <a href="/add" class="btn btn-primary">➕ Добавить задачу</a>
-                <!-- Кнопка сброса вынесена отдельно для безопасности -->
+        <!-- Панель управления (Стекло) -->
+        <div class="glass-panel mb-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h2 class="mb-0">🤖 Панель задач ИИ Агента</h2>
+            <div class="d-flex gap-2">
+                <a href="/add" class="btn btn-glass shadow-sm">➕ Добавить задачу</a>
                 <form action="/reset" method="POST" style="display:inline;" onsubmit="return confirm('⚠️ Вы уверены? Все данные будут удалены!');">
-                    <button type="submit" class="btn btn-outline-danger">🗑️ Сброс БД</button>
+                    <button type="submit" class="btn btn-glass shadow-sm text-danger" style="color: #ffcccc !important;">🗑️ Сброс БД</button>
                 </form>
             </div>
         </div>
 
-        <!-- СЮДА ВСТАВЛЯЕМ ВАШ КОД (Контейнер для задач) -->
+        <!-- Контейнер для задач (Сюда применяется Sortable) -->
         <div class="row" id="tasks-container">
             
             {{range .Tasks}}
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card shadow-sm priority-{{if eq .Priority 2}}high{{else if eq .Priority 1}}medium{{else}}low{{end}}">
-                    <div class="card-header d-flex justify-content-between">
-                        <span class="fw-bold">{{.Title}}</span>
-                        <span class="badge bg-{{if eq .Priority 2}}danger{{else if eq .Priority 1}}warning{{else}}success{{end}}">
+            <!-- Добавили data-id для идентификации при сортировке -->
+            <div class="col-md-6 col-lg-4 mb-3 task-item" data-id="{{.ID}}">
+                <div class="card shadow-sm glass-card priority-{{if eq .Priority 2}}high{{else if eq .Priority 1}}medium{{else}}low{{end}}">
+                    <div class="card-header d-flex justify-content-between align-items-center pt-3 px-3">
+                        <span class="fw-bold fs-6">{{.Title}}</span>
+                        <span class="badge bg-{{if eq .Priority 2}}danger{{else if eq .Priority 1}}warning{{else}}success{{end}} text-dark">
                             {{index $.PriorityNames .Priority}}
                         </span>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text small">{{.Description}}</p>
+                    <div class="card-body px-3">
+                        <p class="card-text small text-dark opacity-75">{{.Description}}</p>
                         
                         <div class="mb-2">
-                            <small>Статус:</small><br>
-                            <span class="badge bg-{{if eq .Status 1}}primary{{else if eq .Status 2}}success{{else if eq .Status -1}}danger{{else}}secondary{{end}}">
+                            <small class="text-dark opacity-50" style="font-size: 0.75rem;">Статус:</small><br>
+                            <span class="badge bg-{{if eq .Status 1}}primary{{else if eq .Status 2}}success{{else if eq .Status -1}}danger{{else}}secondary{{end}} mt-1">
                                 {{index $.StatusNames .Status}}
                             </span>
                         </div>
 
                         {{if not .BeginTask.IsZero}}
-                        <div class="small"><strong>Начало:</strong> {{.BeginTask.Format "02.01 15:04"}}</div>
+                        <div class="small text-dark opacity-75"><strong>Начало:</strong> {{.BeginTask.Format "02.01 15:04"}}</div>
                         {{end}}
                         {{if not .EndTask.IsZero}}
-                        <div class="small"><strong>Завершение:</strong> {{.EndTask.Format "02.01 15:04"}}</div>
+                        <div class="small text-dark opacity-75"><strong>Завершение:</strong> {{.EndTask.Format "02.01 15:04"}}</div>
                         {{end}}
-                        <div class="small text-muted">Обновлено: <span id="change-{{.ID}}">{{.ChangeStatus.Format "02.01 15:04"}}</span></div>
+                        <div class="small text-dark opacity-50 mt-1">Обновлено: <span id="change-{{.ID}}">{{.ChangeStatus.Format "02.01 15:04"}}</span></div>
                     </div>
-                    <div class="card-footer bg-transparent border-top-0">
-                        <select class="form-select form-select-sm" 
-                                onchange="updateStatus({{.ID}}, this.value)"
-                                data-id="{{.ID}}">
-                            <option value="0" {{if eq .Status 0}}selected{{end}}>⏹️ Стоп</option>
-                            <option value="1" {{if eq .Status 1}}selected{{end}}>▶️ Процесс</option>
-                            <option value="2" {{if eq .Status 2}}selected{{end}}>✅ Финиш</option>
-                            <option value="-1" {{if eq .Status -1}}selected{{end}}>❌ Ошибка</option>
-                        </select>
-                        <div class="mt-2">
-                            <a href="/edit?id={{.ID}}" class="btn btn-sm btn-outline-secondary">✏️</a>
-                            <a href="/delete?id={{.ID}}" class="btn btn-sm btn-outline-danger" 
-                               onclick="return confirm('Удалить задачу?')">🗑️</a>
+                    <div class="card-footer bg-transparent border-top-0 pb-3 px-3">
+                        <div class="d-flex gap-2 align-items-center">
+                            <select class="form-select form-select-sm" 
+                                    onchange="updateStatus({{.ID}}, this.value)"
+                                    data-id="{{.ID}}"
+                                    style="background: rgba(255,255,255,0.5); border:none;">
+                                <option value="0" {{if eq .Status 0}}selected{{end}}>⏹️ Стоп</option>
+                                <option value="1" {{if eq .Status 1}}selected{{end}}>▶️ Процесс</option>
+                                <option value="2" {{if eq .Status 2}}selected{{end}}>✅ Финиш</option>
+                                <option value="-1" {{if eq .Status -1}}selected{{end}}>❌ Ошибка</option>
+                            </select>
+                            <div class="ms-auto d-flex gap-1">
+                                <a href="/edit?id={{.ID}}" class="btn btn-sm btn-glass rounded-circle" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center;">✏️</a>
+                                <a href="/delete?id={{.ID}}" class="btn btn-sm btn-glass rounded-circle text-danger" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center;" onclick="return confirm('Удалить задачу?')">🗑️</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             {{else}}
-            <!-- Сообщение, если задач нет -->
             <div class="col-12">
-                <div class="alert alert-info text-center">
-                    Список задач пуст. <a href="/add">Создайте первую задачу!</a>
+                <div class="glass-panel text-center">
+                    <h4>Список задач пуст</h4>
+                    <p>Нажмите "Добавить задачу", чтобы создать первую.</p>
+                    <a href="/add" class="btn btn-glass mt-2">Создать задачу</a>
                 </div>
             </div>
             {{end}}
 
         </div>
-        <!-- КОНЕЦ ВАШЕГО КОДА -->
-
     </div>
 
-    <!-- СЮДА ЖЕ ВСТАВЛЯЕМ СКРИПТ (внутри тега <script>) -->
     <script>
+    // Инициализация Drag-n-Drop
+    const container = document.getElementById('tasks-container');
+    new Sortable(container, {
+        animation: 150,
+        ghostClass: 'bg-opacity-50', // Класс для элемента-призрака при перетаскивании
+        dragClass: 'shadow-lg',      // Класс для перетаскиваемого элемента
+        handle: '.glass-card',       // Перетаскивание за всю карточку
+        onEnd: function(evt) {
+            // Собираем новый порядок ID
+            const order = [];
+            document.querySelectorAll('.task-item').forEach(el => {
+                order.push(el.getAttribute('data-id'));
+            });
+
+            // Отправляем новый порядок на сервер
+            fetch('/api/reorder-tasks', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ids: order })
+            }).catch(err => console.error('Ошибка сохранения порядка:', err));
+        }
+    });
+
+    // Функция обновления статуса (как была)
     async function updateStatus(id, newStatus) {
         try {
             const response = await fetch('/api/update-status', {
@@ -102,19 +197,15 @@
             
             if (response.ok) {
                 const data = await response.json();
-                // Обновляем время изменения без перезагрузки
                 const el = document.getElementById(`change-${id}`);
                 if (el && data.change_status) {
                     el.textContent = data.change_status;
                 }
-                // Можно добавить анимацию успеха
-                console.log('Статус обновлен:', data);
             } else {
                 alert('Ошибка обновления статуса');
             }
         } catch (e) {
             console.error('Fetch error:', e);
-            alert('Ошибка сети');
         }
     }
     </script>

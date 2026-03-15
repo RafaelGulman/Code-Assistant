@@ -81,6 +81,7 @@ func main() {
 	http.HandleFunc("/delete", server.DeleteHandler)
 	http.HandleFunc("/reset", server.ResetHandler)
 	http.HandleFunc("/api/update-status", server.UpdateStatusAPIHandler)
+	http.HandleFunc("/api/reorder-tasks", server.ReorderTasksHandler)
 	http.HandleFunc("/api/tasks", server.TaskAPIHandler)
 
 	log.Println("🚀 Сервер запущен на http://localhost:8080")

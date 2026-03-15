@@ -178,3 +178,38 @@ func (db *DbHandler) DropTasksTable() error {
 	_, err := db.Db.Exec(dropSQL)
 	return err
 }
+
+// UpdateTasksOrder обновляет приоритеты задач согласно новому списку ID
+func (db *DbHandler) UpdateTasksOrder(ids []int) error {
+	// Начинаем транзакцию для скорости и надежности
+	tx, err := db.Db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare("UPDATE tasks SET priority = ? WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for i, id := range ids {
+		var priority int
+		// Присваиваем приоритет в зависимости от позиции
+		if i == 0 {
+			priority = 2 // High
+		} else if i == 1 {
+			priority = 1 // Medium
+		} else {
+			priority = 0 // Low
+		}
+
+		_, err := stmt.Exec(priority, id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
