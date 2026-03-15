@@ -11,4 +11,5 @@ func (tf *TaskFile) read() {
 		log.Println(err)
 	}
 	defer file.Close()
+
 }
