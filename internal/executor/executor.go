@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func (iter *Iterator) StartIteration() {
+func (iter *Iterator) StartIteration() (parser.ContentResponse, error) {
 	iter.id++
 	resp, err := iter.client.SendPrompt(&iter.sysPrompt, &iter.basePrompt)
 	if err != nil {
@@ -18,5 +18,9 @@ func (iter *Iterator) StartIteration() {
 		log.Fatalf("Error unmarshaling ChatResponse: %v", err)
 	}
 	contentAfterParse, err := parser.ParseContentResponse(&result)
-	iter.basePrompt.AddMessage(contentAfterParse.Parameters.Code)
+	// iter.basePrompt.AddMessage(contentAfterParse.Parameters.Code)
+	if err != nil {
+		return *contentAfterParse, err
+	}
+	return *contentAfterParse, nil
 }

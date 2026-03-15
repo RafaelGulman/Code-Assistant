@@ -5,6 +5,6 @@ import (
 )
 
 type DbHandler struct {
-	DbName string
 	Db     *sql.DB
+	DbName string
 }

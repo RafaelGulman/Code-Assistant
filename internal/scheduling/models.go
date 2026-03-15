@@ -72,27 +72,35 @@ type AgentState struct {
 }
 
 type TaskStatus int
+type TaskPriority int
 
 const (
-	stop    TaskStatus = 0
-	process TaskStatus = 1
-	finish  TaskStatus = 2
-	error   TaskStatus = -1
+	Stop    TaskStatus = 0
+	Process TaskStatus = 1
+	Finish  TaskStatus = 2
+	Error   TaskStatus = -1
+	//==================================
+	Low    TaskPriority = 0
+	Medium TaskPriority = 1
+	High   TaskPriority = 2
 )
 
 type Task struct {
+	ID           int
+	Title        string
 	Description  string
-	beginTask    time.Time
-	endTask      time.Time
-	changeStatus time.Time
+	BeginTask    time.Time
+	EndTask      time.Time
+	ChangeStatus time.Time
 	Status       TaskStatus
+	Priority     TaskPriority
 }
 
 func NewTask(description string) *Task {
 	return &Task{
 		Description:  description,
-		beginTask:    time.Now(),
-		changeStatus: time.Now(),
-		Status:       process,
+		BeginTask:    time.Now(),
+		ChangeStatus: time.Now(),
+		Status:       Process,
 	}
 }

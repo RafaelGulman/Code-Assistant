@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Задачи для ИИ Агента</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Стили для цветных полосок приоритета */
+        .priority-high { border-left: 5px solid #dc3545; }
+        .priority-medium { border-left: 5px solid #ffc107; }
+        .priority-low { border-left: 5px solid #198754; }
+        
+        body { background-color: #f8f9fa; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Заголовок и кнопки управления -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🤖 Панель задач ИИ Агента</h2>
+            <div>
+                <a href="/add" class="btn btn-primary">➕ Добавить задачу</a>
+                <!-- Кнопка сброса вынесена отдельно для безопасности -->
+                <form action="/reset" method="POST" style="display:inline;" onsubmit="return confirm('⚠️ Вы уверены? Все данные будут удалены!');">
+                    <button type="submit" class="btn btn-outline-danger">🗑️ Сброс БД</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- СЮДА ВСТАВЛЯЕМ ВАШ КОД (Контейнер для задач) -->
+        <div class="row" id="tasks-container">
+            
+            {{range .Tasks}}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card shadow-sm priority-{{if eq .Priority 2}}high{{else if eq .Priority 1}}medium{{else}}low{{end}}">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">{{.Title}}</span>
+                        <span class="badge bg-{{if eq .Priority 2}}danger{{else if eq .Priority 1}}warning{{else}}success{{end}}">
+                            {{index $.PriorityNames .Priority}}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text small">{{.Description}}</p>
+                        
+                        <div class="mb-2">
+                            <small>Статус:</small><br>
+                            <span class="badge bg-{{if eq .Status 1}}primary{{else if eq .Status 2}}success{{else if eq .Status -1}}danger{{else}}secondary{{end}}">
+                                {{index $.StatusNames .Status}}
+                            </span>
+                        </div>
+
+                        {{if not .BeginTask.IsZero}}
+                        <div class="small"><strong>Начало:</strong> {{.BeginTask.Format "02.01 15:04"}}</div>
+                        {{end}}
+                        {{if not .EndTask.IsZero}}
+                        <div class="small"><strong>Завершение:</strong> {{.EndTask.Format "02.01 15:04"}}</div>
+                        {{end}}
+                        <div class="small text-muted">Обновлено: <span id="change-{{.ID}}">{{.ChangeStatus.Format "02.01 15:04"}}</span></div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <select class="form-select form-select-sm" 
+                                onchange="updateStatus({{.ID}}, this.value)"
+                                data-id="{{.ID}}">
+                            <option value="0" {{if eq .Status 0}}selected{{end}}>⏹️ Стоп</option>
+                            <option value="1" {{if eq .Status 1}}selected{{end}}>▶️ Процесс</option>
+                            <option value="2" {{if eq .Status 2}}selected{{end}}>✅ Финиш</option>
+                            <option value="-1" {{if eq .Status -1}}selected{{end}}>❌ Ошибка</option>
+                        </select>
+                        <div class="mt-2">
+                            <a href="/edit?id={{.ID}}" class="btn btn-sm btn-outline-secondary">✏️</a>
+                            <a href="/delete?id={{.ID}}" class="btn btn-sm btn-outline-danger" 
+                               onclick="return confirm('Удалить задачу?')">🗑️</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{else}}
+            <!-- Сообщение, если задач нет -->
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    Список задач пуст. <a href="/add">Создайте первую задачу!</a>
+                </div>
+            </div>
+            {{end}}
+
+        </div>
+        <!-- КОНЕЦ ВАШЕГО КОДА -->
+
+    </div>
+
+    <!-- СЮДА ЖЕ ВСТАВЛЯЕМ СКРИПТ (внутри тега <script>) -->
+    <script>
+    async function updateStatus(id, newStatus) {
+        try {
+            const response = await fetch('/api/update-status', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `id=${id}&status=${newStatus}`
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Обновляем время изменения без перезагрузки
+                const el = document.getElementById(`change-${id}`);
+                if (el && data.change_status) {
+                    el.textContent = data.change_status;
+                }
+                // Можно добавить анимацию успеха
+                console.log('Статус обновлен:', data);
+            } else {
+                alert('Ошибка обновления статуса');
+            }
+        } catch (e) {
+            console.error('Fetch error:', e);
+            alert('Ошибка сети');
+        }
+    }
+    </script>
+</body>
+</html>

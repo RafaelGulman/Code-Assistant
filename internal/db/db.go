@@ -3,19 +3,31 @@ package db
 import (
 	"app/codeAssistant/internal/scheduling"
 	"database/sql"
+	"fmt"
+	"log"
 	"time"
 )
 
-// InitDB — инициализация подключения и создание таблицы
-func (db *DbHandler) InitDB(dbPath string) error {
+func (h *DbHandler) InitDB(dbPath string) error {
 	var err error
-	db.DbName = dbPath
-	db.Db, err = sql.Open("sqlite3", dbPath)
+
+	// 1. Попытка открытия
+	h.Db, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return nil
+		// ❌ БЫЛО: return nil (это скрывало проблему)
+		// ✅ СТАЛО: Возвращаем реальную ошибку
+		return fmt.Errorf("ошибка sql.Open: %w", err)
 	}
 
-	// SQL запрос на создание таблицы
+	// 2. Проверка реального соединения (Ping)
+	// sql.Open может вернуть успех, даже если файл недоступен. Ping проверяет реально.
+	if err := h.Db.Ping(); err != nil {
+		h.Db.Close() // Закрываем битое соединение
+		h.Db = nil   // Сбрасываем в nil, чтобы было понятно
+		return fmt.Errorf("ошибка подключения (Ping): %w", err)
+	}
+
+	// 3. Создание таблицы
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS tasks (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,11 +41,12 @@ func (db *DbHandler) InitDB(dbPath string) error {
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 
-	_, err = db.Db.Exec(createTableSQL)
+	_, err = h.Db.Exec(createTableSQL)
 	if err != nil {
-		return nil
+		return fmt.Errorf("ошибка создания таблицы: %w", err)
 	}
 
+	log.Println("✅ База данных успешно инициализирована:", dbPath)
 	return nil
 }
 

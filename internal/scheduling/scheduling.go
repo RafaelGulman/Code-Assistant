@@ -195,11 +195,39 @@ func getOSInfo() string {
 }
 
 func (t *Task) UpdateState(status TaskStatus) {
-	if status == finish {
+	if status == Finish {
 		t.Status = status
-		t.changeStatus = time.Now()
-		t.endTask = t.changeStatus
+		t.ChangeStatus = time.Now()
+		t.EndTask = t.ChangeStatus
 	}
 	t.Status = status
-	t.changeStatus = time.Now()
+	t.ChangeStatus = time.Now()
+}
+
+func (s TaskStatus) String() string {
+	switch s {
+	case Stop:
+		return "Остановлено"
+	case Process:
+		return "В процессе"
+	case Finish:
+		return "Завершено"
+	case Error:
+		return "Ошибка"
+	default:
+		return "Неизвестно"
+	}
+}
+
+func (p TaskPriority) String() string {
+	switch p {
+	case Low:
+		return "Низкий"
+	case Medium:
+		return "Средний"
+	case High:
+		return "Высокий"
+	default:
+		return "Не задан"
+	}
 }
